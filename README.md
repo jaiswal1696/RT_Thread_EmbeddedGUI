@@ -10,3 +10,6 @@ Most of the Premises have Elevator installed in them, but after the outbreak of 
 
 I have decided to use the NuMaker-HMI-N9H30 as the brain of this project and have deployed the Alexa Into It, Theni have interfaced the NuMaker-HMI-N9H30 with PCA9685 PWM Driver to drive the Servo Motors. These servo motor are Retrofitted on top of the Elevator Buttons and then trigger according to the Instruction send By the NuMaker-HMI-N9H30 depending upon the User Interaction.
 
+![Untitled design](https://user-images.githubusercontent.com/110446331/194836554-f38b1b07-8348-47ec-a4cb-7da1dead403e.png)
+
+
