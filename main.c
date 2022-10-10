@@ -1,15 +1,3 @@
-/**************************************************************************//**
-*
-* @copyright (C) 2019 Nuvoton Technology Corp. All rights reserved.
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-* Change Logs:
-* Date            Author       Notes
-* 2020-12-12      Wayne        First version
-*
-******************************************************************************/
-
 #include <rtthread.h>
 
 #define LOG_TAG         "mnt"
@@ -244,6 +232,83 @@ int filesystem_init(void)
             rt_kprintf("Failed to create block device for %s.\n", PARTITION_NAME_FILESYSTEM);
         }
     }
+    
+ const char *szKeyLabel[] =
+{
+    "K1",
+    "K2",
+    "K3",
+    "K4",
+    "K5",
+    "K6"
+};
+
+static void nu_key_matrix_cb(void *args)
+{
+    uint32_t ri = (uint32_t)args;
+    int ci;
+    for (ci = 0; ci < MATRIX_COL_NUM; ci++)
+    {
+        /* Find column bit is low. */
+        if (!rt_pin_read(au32KeyMatrix_Col[ci]))
+        {
+            break;
+        }
+    }
+    rt_kprintf("[%d %d] Pressed %s button.\n", ci, ri, szKeyLabel[(ci) + MATRIX_COL_NUM * ri]);
+}
+
+static void nu_key_matrix_switch(uint32_t counter)
+{
+    int i;
+    for (i = 0; i < MATRIX_COL_NUM; i++)
+    {
+        /* set pin value to high */
+        rt_pin_write(au32KeyMatrix_Col[i], PIN_HIGH);
+    }
+    /* set pin value to low */
+    rt_pin_write(au32KeyMatrix_Col[counter % MATRIX_COL_NUM], PIN_LOW);
+}
+#endif
+
+int main(int argc, char **argv)
+{
+#if defined(RT_USING_PIN)
+    uint32_t counter = 1;
+    int i = 0;
+
+    for (i = 0; i < MATRIX_ROW_NUM; i++)
+    {
+        /* set pin mode to input */
+        rt_pin_mode(au32KeyMatrix_Row[i], PIN_MODE_INPUT_PULLUP);
+
+        rt_pin_attach_irq(au32KeyMatrix_Row[i], PIN_IRQ_MODE_FALLING, nu_key_matrix_cb, (void *)i);
+        rt_pin_irq_enable(au32KeyMatrix_Row[i], PIN_IRQ_ENABLE);
+    }
+
+    for (i = 0; i < MATRIX_COL_NUM; i++)
+    {
+        /* set  pin mode to output */
+        rt_pin_mode(au32KeyMatrix_Col[i], PIN_MODE_OUTPUT);
+    }
+
+    /* set INDICATOR_LED pin mode to output */
+    rt_pin_mode(INDICATOR_LED, PIN_MODE_OUTPUT);
+
+    /* Toggle column pins in key matrix. */
+    while (counter++ > 0)
+    {
+        rt_pin_write(INDICATOR_LED, PIN_HIGH);
+        rt_thread_mdelay(200);
+        rt_pin_write(INDICATOR_LED, PIN_LOW);
+        rt_thread_mdelay(200);
+        nu_key_matrix_switch(counter);
+    }
+#endif
+
+    return 0;
+}   
+    
 #endif
 
 #if defined(PKG_USING_DFS_YAFFS) && defined(RT_USING_DFS_MNTTABLE)
